@@ -1,0 +1,9 @@
+project_name = "logistics-streaming"
+environment  = "dev"
+aws_region   = "us-east-1"
+owner        = "data-engineering"
+
+cost_center  = "data-platform"
+
+# Live demo: make the flow visible minute by minute (not a production pattern).
+# datalake_partition_granularity = "minute"

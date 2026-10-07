@@ -1,0 +1,92 @@
+// Arquitectura del lab de streaming (Sesion 7)
+// Render local opcional (no versionar el resultado):
+//   dot -Tpng architecture.dot -o architecture.png
+//   dot -Tsvg architecture.dot -o architecture.svg
+//
+// Fuente: infra/main.tf, infra/modules/{kinesis,consumer,dynamodb,datalake},
+// docs/internal/adr/0001-streaming-architecture.md
+
+digraph lab_streaming_architecture {
+    graph [
+        rankdir=LR,
+        fontname="Helvetica",
+        fontsize=11,
+        label="Lab Streaming AWS — Kinesis -> Lambda/Firehose",
+        labelloc=t,
+        labeljust=c,
+        splines=ortho,
+        nodesep=0.6,
+        ranksep=0.9,
+        compound=true
+    ];
+
+    node [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", fillcolor="#f5f5f5", color="#666666"];
+    edge [fontname="Helvetica", fontsize=9, color="#444444"];
+
+    // ---- Producer ----
+    subgraph cluster_producer {
+        label="Producer (Go)";
+        style="rounded,dashed";
+        color="#9467bd";
+
+        producer [label="producer\n(cmd/producer)\nHTTP server + simulador\nAWS SDK default credential chain", fillcolor="#ece7f6"];
+    }
+
+    // ---- Streaming backbone ----
+    subgraph cluster_stream {
+        label="Streaming backbone";
+        style="rounded,dashed";
+        color="#1f77b4";
+
+        kinesis [label="Kinesis Data Stream\n\"logistics-events\"\nprovisioned, 2 shards\nmodule: kinesis", fillcolor="#dbeaf7", shape=cylinder];
+    }
+
+    // ---- Consumer 1: estado actual ----
+    subgraph cluster_consumer {
+        label="Consumidor 1 — Estado actual";
+        style="rounded,dashed";
+        color="#2ca02c";
+
+        lambda [label="Lambda consumer (Python)\nhandler.lambda_handler\nReportBatchItemFailures\nmodule: consumer", fillcolor="#e2f3e1"];
+        dynamodb [label="DynamoDB\n<name_prefix>-package-state\nPutItem condicional por updated_at\nmodule: dynamodb", fillcolor="#e2f3e1", shape=cylinder];
+        dlq [label="SQS\n<function_name>-failures\nDestino de fallos (metadata only)\nmodule: consumer", fillcolor="#fde9e9", shape=cylinder];
+    }
+
+    // ---- Consumer 2: historico ----
+    subgraph cluster_datalake {
+        label="Consumidor 2 — Historico";
+        style="rounded,dashed";
+        color="#d62728";
+
+        firehose [label="Kinesis Data Firehose\n<name_prefix>-events-to-s3\nbuffer 1MB / N seg\nmodule: datalake", fillcolor="#fbe6e6"];
+        s3 [label="S3 datalake\n<name_prefix>-<account_id>-datalake\nevents/ y errors/ particionado\npor hora de llegada\nmodule: datalake", fillcolor="#fbe6e6", shape=folder];
+    }
+
+    // ---- Observabilidad y costos ----
+    subgraph cluster_ops {
+        label="Observabilidad / Costos";
+        style="rounded,dashed";
+        color="#7f7f7f";
+
+        cw_lambda [label="CloudWatch Logs\n/aws/lambda/<function_name>", fillcolor="#eeeeee"];
+        cw_firehose [label="CloudWatch Logs\n/aws/kinesisfirehose/<name>", fillcolor="#eeeeee"];
+        sns [label="SNS budget_alerts\n(opcional, enable_budget_guardrail)", fillcolor="#eeeeee"];
+        budget [label="AWS Budgets\nmonthly, 80%/100% thresholds", fillcolor="#eeeeee"];
+    }
+
+    // ---- Flujo principal ----
+    producer -> kinesis [label="PutRecord(s)\nevento de paquete (JSON)", penwidth=1.4];
+
+    kinesis -> lambda [label="GetRecords\n(event source mapping)", penwidth=1.4];
+    lambda -> dynamodb [label="PutItem\n(estado actual)"];
+    lambda -> dlq [label="on_failure\n(batch item failures)", style=dashed, color="#d62728"];
+
+    kinesis -> firehose [label="GetRecords\n(kinesis_source_configuration)", penwidth=1.4];
+    firehose -> s3 [label="PutObject\n(buffered, extended_s3)"];
+
+    // ---- Logs y alertas ----
+    lambda -> cw_lambda [style=dotted, arrowhead=empty];
+    firehose -> cw_firehose [style=dotted, arrowhead=empty];
+    budget -> sns [style=dotted, arrowhead=empty, label="threshold breach"];
+    sns -> budget [style=invis];
+}

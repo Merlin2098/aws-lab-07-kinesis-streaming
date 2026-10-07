@@ -1,0 +1,8 @@
+[
+  {"package_id": "PKG-002", "timestamp": "2026-10-04T10:00:00Z", "latitude": -12.0464, "longitude": -77.0428, "status": "CREATED"},
+  {"package_id": "PKG-003", "timestamp": "2026-10-04T10:05:00Z", "latitude": -12.0464, "longitude": -77.0428, "status": "CREATED"},
+  {"package_id": "PKG-002", "timestamp": "2026-10-04T10:40:00Z", "latitude": -12.0560, "longitude": -77.0610, "status": "PICKED_UP"},
+  {"package_id": "PKG-003", "timestamp": "2026-10-04T10:50:00Z", "latitude": -12.0710, "longitude": -77.0700, "status": "IN_TRANSIT"},
+  {"package_id": "PKG-004", "timestamp": "2026-10-04T10:55:00Z", "latitude": -12.0464, "longitude": -77.0428, "status": "CREATED"},
+  {"package_id": "PKG-002", "timestamp": "2026-10-04T11:30:00Z", "latitude": -12.0850, "longitude": -77.0520, "status": "IN_TRANSIT"}
+]
