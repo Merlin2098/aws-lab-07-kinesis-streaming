@@ -61,7 +61,13 @@ de *cuál lenguaje en qué punto* no es arbitraria.
 
 ## Requisitos
 
-AWS CLI, Terraform ≥ 1.6, Go ≥ 1.23, `uv`, Git Bash y una access key de AWS. Copia `.env.credentials.example` a `.env.credentials`, pon tus claves y cárgalo con `set -a; source .env.credentials; set +a` en cada terminal (no hace falta un perfil de AWS).
+1. Clona el repositorio:
+
+   ```bash
+   git clone https://github.com/Merlin2098/lab_streaming_aws.git
+   cd lab_streaming_aws
+   ```
+2. AWS CLI, Terraform ≥ 1.6, Go ≥ 1.23, `uv`, Git Bash y una access key de AWS. Copia `.env.credentials.example` a `.env.credentials`, pon tus claves y cárgalo con `set -a; source .env.credentials; set +a` en cada terminal (no hace falta un perfil de AWS).
 
 ## 1. Desplegar (instructor)
 
